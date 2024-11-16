@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Text any WhatsApp number</title>
+    <meta name="description" content="Select a country and enter a phone number to open a WhatsApp chat with the entered phone number.">
+    <meta name="keywords" content="whatsapp,contact,number,phone,text">
+    <meta name="author" content="Diego Martín">
+    <link rel="icon" href="assets/icons/favicon.ico" type="image/x-icon">
+    <link rel="apple-touch-icon" sizes="180x180" href="assets/icons/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="assets/icons/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="assets/icons/favicon-16x16.png">
+    <link rel="manifest" href="assets/site.webmanifest">
+    <meta name="msapplication-TileColor" content="#2b5797">
+    <meta name="theme-color" content="#ffffff">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <link rel="stylesheet" type="text/css" href="addtohomescreen/main.css">
+    <script src="addtohomescreen/index.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #F1F4F8; /* Set background color */
+        }
+        .container {
+            max-width: 400px;
+            margin: auto;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .btn-primary {
+            background-color: #25D366; /* Set button color */
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            text-align: center;
+            text-decoration: none;
+            display: inline-block;
+            font-size: 28px;
+            cursor: pointer;
+            width: 100%;
+            border-radius: 7px;
+        }
+        .btn-primary:disabled {
+            background-color: #cccccc; /* Disabled button color */
+            cursor: not-allowed;
+        }
+        .input-group {
+            display: flex;
+            align-items: center;
+            font-size: 36px;
+            align-items: start;
+        }
+        .input-group p {
+            margin-right: 10px;
+            cursor: pointer;
+        }
+        #change-prefix-link {
+            cursor: pointer;
+            color: #0097f5;
+            font-size: 14px;
+            text-transform: lowercase;
+            font-weight: bold; 
+        }
+        .input-group select {
+            display: none; /* Hide the dropdown initially */
+            border-radius: 8px;
+            font-size: 24px;
+            width: 100%;
+        }
+        .input-group input {
+            flex: 1;
+            border-radius: 8px;
+            font-size: 36px;
+            letter-spacing: 0.25rem;
+            padding-left: 10px;
+            width: 100%;
+        }
+        .description {
+            margin-top: 20px;
+            font-size: 14px;
+            color: #555;
+        }
+        #phone-prefix {
+            white-space: nowrap;
+            margin-bottom: 0;
+            margin-top: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Text anyone on WhatsApp</h1>
+        <p>Text anyone with just their phone number, no need to add them to your contacts. Just type in their phone number and hit the green button!</p>
+        <div class="form-group input-group">
+            <span id="change-prefix-link" class="change-prefix-link">Change prefix</span>
+            <select id="country-selector" class="form-control">
+                <!-- Options will be populated by JavaScript -->
+            </select>
+        </div>
+        <div class="form-group input-group">
+            <p id="phone-prefix">+34</p>
+            <input type="tel" id="input-field" class="form-control" placeholder="">
+        </div>
+
+        <div class="form-group">
+            <button id="submit-button" class="btn btn-primary" disabled>Chat</button>
+        </div>
+    </div>
+
+<script>
+addToHomescreen();
+$(document).ready(function() {
+    // Load countries and languages from JSON files
+    $.when(
+        $.getJSON('assets/countries.min.json'),
+        $.getJSON('assets/languages.min.json')
+    ).done(function(countryList, languageList) {
+        // Get user's preferred language based on IP
+        $.get('https://ipapi.co/json/', function(data) {
+            const countries = countryList[0];
+            const languages = languageList[0];
+            const userLang2 = data.languages.split(',')[0].split('-')[0];
+            const userLang = languages.find(lang => lang["639-1"] === userLang2)?.["639-2"] || 'eng';
+            const countryCode = data.country_calling_code.replace('+', '');
+            const country = countries.find(c => c.cca2 === data.country_code);
+            // Translate and sort countries
+            const translatedCountries = countries.map(country => {
+                const translation = country.translations[userLang] || country.name;
+                const commonTranslation = translation.common;
+                return {
+                    ...country,
+                    displayName: commonTranslation
+                };
+            }).sort((a, b) => a.displayName.localeCompare(b.displayName));
+
+            // Populate the country selector
+            translatedCountries.forEach(country => {
+                const suffix = country.idd.suffixes.length > 1 ? '' : country.idd.suffixes.join('');
+                const option = `<option value="${country.flag} ${country.idd.root}${suffix}">${country.flag} ${country.displayName} (${country.idd.root}${suffix})</option>`;
+                $('#country-selector').append(option);
+            });
+
+            if (country) {
+                $('#country-selector').val(`${country.flag} +${countryCode}`);
+                $('#phone-prefix').text(`${country.flag} +${countryCode}`);
+            }
+        });
+    });
+
+    $('#phone-prefix,#change-prefix-link').click(function() {
+        $('#country-selector').toggle();
+        $('#change-prefix-link').toggle();
+    });
+
+    $('#country-selector').change(function() {
+        const prefix = $(this).val();
+        $('#phone-prefix').text(prefix);
+        $('#country-selector').hide();
+        $('#change-prefix-link').toggle();
+    });
+
+    $('#input-field').on('input', function() {
+        const input = $(this).val();
+        if (input.trim() === '') {
+            $('#submit-button').prop('disabled', true);
+        } else {
+            $('#submit-button').prop('disabled', false);
+        }
+    });
+
+    $('#submit-button').click(function() {
+        const prefix = $('#country-selector').val().replace(/[^\d]/g, '');
+        const input = $('#input-field').val().replace(/\D/g, '');
+        const url = 'https://wa.me/' + prefix + input;
+        window.open(url, '_blank');
+    });
+});
+</script>
+</body>
+</html>
