@@ -17,6 +17,7 @@
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <link rel="stylesheet" type="text/css" href="addtohomescreen/main.css">
     <script src="addtohomescreen/index.min.js"></script>
+    <style>#google_translate_element,.skiptranslate{display:none;}body{top:0!important;}</style>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -90,7 +91,17 @@
         }
     </style>
 </head>
+<!-- Google tag (gtag.js) -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-VZY9F4BVEW"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-VZY9F4BVEW');
+</script>
 <body>
+    <div id="google_translate_element"></div>
     <div class="container">
         <h1>Text anyone on WhatsApp</h1>
         <p>Text anyone with just their phone number, no need to add them to your contacts. Just type in their phone number and hit the green button!</p>
@@ -109,7 +120,7 @@
             <button id="submit-button" class="btn btn-primary" disabled>Chat</button>
         </div>
     </div>
-
+<script src="https://translate.google.com/translate_a/element.js?cb=googleTranslateElementInit"></script>
 <script>
 addToHomescreen();
 $(document).ready(function() {
@@ -178,6 +189,17 @@ $(document).ready(function() {
         window.open(url, '_blank');
     });
 });
+
+function googleTranslateElementInit() {
+    new google.translate.TranslateElement({
+        pageLanguage: 'en', 
+        includedLanguages: 'et', 
+        autoDisplay: false
+    }, 'google_translate_element');
+    var a = document.querySelector("#google_translate_element select");
+    a.selectedIndex=1;
+    a.dispatchEvent(new Event('change'));
+}
 </script>
 </body>
 </html>
