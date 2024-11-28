@@ -130,13 +130,43 @@ $(document).ready(function() {
         $.getJSON('assets/languages.min.json')
     ).done(function(countryList, languageList) {
         // Get user's preferred language based on IP
-        $.get('https://ipapi.co/json/', function(data) {
+        var request = $.get('https://ipapi.co/json/');
+        request.done(function(data) {
             const countries = countryList[0];
             const languages = languageList[0];
             const userLang2 = data.languages.split(',')[0].split('-')[0];
             const userLang = languages.find(lang => lang["639-1"] === userLang2)?.["639-2"] || 'eng';
             const countryCode = data.country_calling_code.replace('+', '');
             const country = countries.find(c => c.cca2 === data.country_code);
+            // Translate and sort countries
+            const translatedCountries = countries.map(country => {
+                const translation = country.translations[userLang] || country.name;
+                const commonTranslation = translation.common;
+                return {
+                    ...country,
+                    displayName: commonTranslation
+                };
+            }).sort((a, b) => a.displayName.localeCompare(b.displayName));
+
+            // Populate the country selector
+            translatedCountries.forEach(country => {
+                const suffix = country.idd.suffixes.length > 1 ? '' : country.idd.suffixes.join('');
+                const option = `<option value="${country.flag} ${country.idd.root}${suffix}">${country.flag} ${country.displayName} (${country.idd.root}${suffix})</option>`;
+                $('#country-selector').append(option);
+            });
+
+            if (country) {
+                $('#country-selector').val(`${country.flag} +${countryCode}`);
+                $('#phone-prefix').text(`${country.flag} +${countryCode}`);
+            }
+        });
+        request.fail(function() {
+            const countries = countryList[0];
+            const languages = languageList[0];
+            const userLang2 = 'en';
+            const userLang = 'eng';
+            const countryCode = '1';
+            const country = countries.find(c => c.cca2 === 'US');
             // Translate and sort countries
             const translatedCountries = countries.map(country => {
                 const translation = country.translations[userLang] || country.name;
